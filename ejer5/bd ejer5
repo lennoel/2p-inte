@@ -1,0 +1,51 @@
+CREATE TABLE alumno (
+    id INT PRIMARY KEY,
+    nombre VARCHAR(50),
+    paterno VARCHAR(50)
+);
+
+INSERT INTO alumno (id, nombre, paterno) VALUES
+(1, 'Martha', 'Smith'),
+(2, 'Marta', 'Smith'),
+(3, 'John', 'Doe'),
+(4, 'Jane', 'Doe'),
+(5, 'Alice', 'Wonderland');
+
+IF OBJECT_ID('comparar_nombres', 'P') IS NOT NULL
+    DROP PROCEDURE comparar_nombres;
+GO
+
+
+CREATE PROCEDURE comparar_nombres
+    @nombre1 VARCHAR(50),
+    @nombre2 VARCHAR(50)
+AS
+BEGIN
+    DECLARE @sql NVARCHAR(MAX);
+    DECLARE @nombre1_lower NVARCHAR(50);
+    DECLARE @nombre2_lower NVARCHAR(50);
+
+    -- Convertir nombres a minúsculas para una comparación insensible a mayúsculas/minúsculas
+    SET @nombre1_lower = LOWER(@nombre1);
+    SET @nombre2_lower = LOWER(@nombre2);
+
+    -- Construir la consulta SQL para comparar los nombres
+    SET @sql = '
+    SELECT
+        id,
+        nombre,
+        paterno,
+        CASE
+            WHEN LOWER(nombre) = @nombre1_lower AND LOWER(nombre) = @nombre2_lower THEN ''Iguales''
+            WHEN LOWER(nombre) = @nombre1_lower THEN ''Nombre1 igual''
+            WHEN LOWER(nombre) = @nombre2_lower THEN ''Nombre2 igual''
+            ELSE ''Diferentes''
+        END AS Comparacion
+    FROM alumno
+    WHERE LOWER(nombre) = @nombre1_lower OR LOWER(nombre) = @nombre2_lower;';
+
+    -- Ejecutar la consulta
+    EXEC sp_executesql @sql, N'@nombre1_lower NVARCHAR(50), @nombre2_lower NVARCHAR(50)', @nombre1_lower, @nombre2_lower;
+END;
+GO
+EXEC comparar_nombres 'Marthaa', 'Martaa';
